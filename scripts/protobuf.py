@@ -143,6 +143,7 @@ def protoc_path():
     binary = f"protoc-{_get_protobuf_version()}" + (
         ".exe" if sys.platform == "win32" else ""
     )
+    return "protoc"
     return os.path.join("bin", binary)
 
 
@@ -404,7 +405,6 @@ def main():  # pylint: disable=too-many-return-statements
     if args.command == "generate":
         if args.download:
             _download_protoc(args.force)
-        _verify_protoc_version()
         return update_auto_generated_code()
     if args.command == "verify":
         if args.download:

@@ -1,4 +1,7 @@
 """Audio sources that can provide raw PCM frames that pyatv can stream."""
+
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 import array
 import asyncio
@@ -13,8 +16,15 @@ import threading
 import time
 from typing import Generator, Optional, Union
 
-import miniaudio
-from miniaudio import SampleFormat
+try:
+    import miniaudio
+    from miniaudio import SampleFormat, StreamableSource
+except ImportError:
+    class StreamableSource:
+        def __init__(self):
+            raise NotImplementedError("Install miniaudio to use this feature")
+
+
 import requests
 
 from pyatv.exceptions import NotSupportedError, OperationTimeoutError, ProtocolError
@@ -100,7 +110,7 @@ class AudioSource(ABC):
         """Return duration in seconds."""
 
 
-class StreamableIOBaseWrapper(miniaudio.StreamableSource):
+class StreamableIOBaseWrapper(StreamableSource):
     """Wraps a reader into a StreamableSource that miniaudio can consume."""
 
     def __init__(self, reader: io.BufferedIOBase) -> None:
@@ -163,7 +173,7 @@ class BufferedIOBaseWrapper(io.BufferedIOBase):
         return True
 
 
-class StreamReaderWrapper(miniaudio.StreamableSource):
+class StreamReaderWrapper(StreamableSource):
     """Wraps a reader into a StreamableSource that miniaudio can consume."""
 
     def __init__(
@@ -197,8 +207,10 @@ class StreamReaderWrapper(miniaudio.StreamableSource):
         return self.buffer.get(to_read)
 
     def seek(
-        self, offset: int, origin: miniaudio.SeekOrigin = miniaudio.SeekOrigin.START
+        self, offset: int, origin: miniaudio.SeekOrigin = None
     ) -> bool:
+        if origin is None:
+            origin = miniaudio.SeekOrigin.START
         """Seek to position in stream."""
         if origin in (miniaudio.SeekOrigin.START, 0):
             return self.buffer.seek(offset)
@@ -454,7 +466,7 @@ class BufferedIOBaseSource(AudioSource):
 # Cloudflare is blocking requests by urllib, so better to use requests instead which
 # is better anyway. See #1546 for details.
 # NB: This is not a perfect implementation in any way, improvements are welcome!
-class PatchedIceCastClient(miniaudio.StreamableSource):
+class PatchedIceCastClient(StreamableSource):
     """Patched version of IceCastClient that breaks when all data has been read."""
 
     BLOCK_SIZE = 8 * 1024

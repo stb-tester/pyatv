@@ -3,8 +3,6 @@
 import asyncio
 from typing import Callable, Mapping, Optional
 
-import miniaudio
-
 import pyatv
 
 HOMESHARING_SERVICE: str = "_appletv-v2._tcp.local"
@@ -94,6 +92,8 @@ async def is_streamable(filename: str) -> bool:
     and streamable by pyatv. It will never raise an exception, e.g. because the
     file is missing or lack of permissions.
     """
+    import miniaudio
+
     try:
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(None, miniaudio.get_file_info, filename)

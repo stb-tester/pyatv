@@ -8,11 +8,6 @@ from pyatv.const import Protocol
 from pyatv.core import Core, MutableService, SetupData
 from pyatv.core.scan import ScanHandlerDeviceInfoName
 from pyatv.interface import BaseService, DeviceInfo
-from pyatv.protocols import airplay as airplay_proto
-from pyatv.protocols import companion as companion_proto
-from pyatv.protocols import dmap as dmap_proto
-from pyatv.protocols import mrp as mrp_proto
-from pyatv.protocols import raop as raop_proto
 
 
 class _ProtocolModule(typing.Protocol):
@@ -39,10 +34,23 @@ class _ProtocolModule(typing.Protocol):
         ...
 
 
-PROTOCOLS: Dict[Protocol, _ProtocolModule] = {
-    Protocol.AirPlay: airplay_proto,
-    Protocol.Companion: companion_proto,
-    Protocol.DMAP: dmap_proto,
-    Protocol.MRP: mrp_proto,
-    Protocol.RAOP: raop_proto,
-}
+def get_protocol(protocol: Protocol) -> _ProtocolModule:
+    """Look up protocol module for a protocol."""
+    match protocol:
+        case Protocol.Companion:
+            from . import companion as companion_proto
+            return companion_proto
+        case Protocol.DMAP:
+            from . import dmap as dmap_proto
+            return dmap_proto
+        case Protocol.MRP:
+            from . import mrp as mrp_proto
+            return mrp_proto
+        case Protocol.RAOP:
+            from . import raop as raop_proto
+            return raop_proto
+        case Protocol.AirPlay:
+            from . import airplay as airplay_proto
+            return airplay_proto
+        case _:
+            raise ValueError(f"unknown protocol: {protocol}")

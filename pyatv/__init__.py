@@ -23,7 +23,7 @@ from pyatv.core.scan import (
     ZeroconfUnicastScanner,
 )
 from pyatv.interface import Storage
-from pyatv.protocols import PROTOCOLS
+from pyatv.protocols import get_protocol
 from pyatv.storage.memory_storage import MemoryStorage
 from pyatv.support import http
 
@@ -73,11 +73,12 @@ async def scan(  # pylint: disable=too-many-locals
     if protocol:
         protocols.update(protocol if isinstance(protocol, set) else {protocol})
 
-    for proto, proto_methods in PROTOCOLS.items():
+    for proto in Protocol:
         # If specific protocols was given, skip this one if it isn't listed
         if protocol and proto not in protocols:
             continue
 
+        proto_methods = get_protocol(proto)
         scanner.add_service_info(proto, proto_methods.service_info)
 
         for service_type, handler in proto_methods.scan().items():
@@ -125,13 +126,15 @@ async def connect(  # pylint: disable=too-many-locals
     atv = FacadeAppleTV(config_copy, session_manager, core_dispatcher, settings)
 
     try:
-        for proto, proto_methods in PROTOCOLS.items():
+        for proto in Protocol:
             service = config_copy.get_service(proto)
             if service is None or not service.enabled:
                 continue
             if not service.enabled:
                 _LOGGER.debug("Ignore %s as it is disabled", proto.name)
                 continue
+
+            proto_methods = get_protocol(proto)
 
             # Lock protocol argument so protocol does not have to deal
             # with that
@@ -172,9 +175,7 @@ async def pair(
     if not service:
         raise exceptions.NoServiceError(f"no service available for {protocol}")
 
-    proto_methods = PROTOCOLS.get(protocol)
-    if not proto_methods:
-        raise RuntimeError(f"missing implementation for {protocol}")
+    proto_methods = get_protocol(protocol)
 
     storage = storage or MemoryStorage()
 

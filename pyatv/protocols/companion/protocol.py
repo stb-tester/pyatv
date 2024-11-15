@@ -34,7 +34,7 @@ _OPACK_FRAMES = [
     FrameType.P_OPACK,
 ]
 
-DEFAULT_TIMEOUT = 10.0  # Seconds
+DEFAULT_TIMEOUT = 30.0  # Seconds
 
 SRP_SALT = ""
 SRP_OUTPUT_INFO = "ClientEncrypt-main"

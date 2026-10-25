@@ -140,11 +140,10 @@ def _verify_protoc_version():
 
 def protoc_path():
     """Return path to protoc binary."""
-    binary = f"protoc-{_get_protobuf_version()}" + (
-        ".exe" if sys.platform == "win32" else ""
-    )
+    # Use protoc from Ubuntu's protobuf-compiler package rather than the
+    # version upstream downloads, so that the code we generate matches the
+    # python3-protobuf runtime that Ubuntu ships.
     return "protoc"
-    return os.path.join("bin", binary)
 
 
 def extract_message_info():

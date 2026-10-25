@@ -1,25 +1,42 @@
 """Convenience methods for extracting metadata from an audio file."""
 
+from __future__ import annotations
+
 import asyncio
 import io
 from typing import Union
 
-from tinytag import TinyTag
+try:
+    from tinytag import TinyTag
+except ImportError:
+    # tinytag is only needed to read tags off audio files being streamed, so
+    # treat it as optional (Ubuntu doesn't package it).  Importing airplay or
+    # raop shouldn't fail just because it's missing.
+    TinyTag = None
 
+from pyatv.exceptions import NotSupportedError
 from pyatv.interface import MediaMetadata
 
 EMPTY_METADATA = MediaMetadata(None, None, None, None)
 
 
 def _open_file(file: io.BufferedIOBase) -> TinyTag:
+    _require_tinytag()
     start_position = file.tell()
     in_file = TinyTag.get(file_obj=file)
     file.seek(start_position)
     return in_file
 
 
+def _require_tinytag() -> None:
+    """Raise if tinytag isn't installed."""
+    if TinyTag is None:
+        raise NotSupportedError("install tinytag to extract metadata from audio")
+
+
 async def get_metadata(file: Union[str, io.BufferedIOBase]) -> MediaMetadata:
     """Extract metadata from a file and return it."""
+    _require_tinytag()
     loop = asyncio.get_event_loop()
 
     # TODO: TinyTag will always start by seeking to the end of a
